@@ -20,9 +20,9 @@ public:
 	virtual ~VideoReader(){};
 	virtual void open() = 0;
 	virtual void grabFrame() = 0;
-	virtual void readCurFrameRGB(unsigned char* imgdata) = 0;
-	virtual void readCurFrameGray(unsigned char* grayImgData) = 0;
-	virtual void readCurFrame(unsigned char* rgbdata, unsigned char* graydata) = 0;
+	virtual void readCurFrameRGB(cv::Mat& imgdata) = 0;
+	virtual void readCurFrameGray(cv::Mat& grayImgData) = 0;
+	virtual void readCurFrame(cv::Mat& rgbdata, cv::Mat& graydata) = 0;
 	virtual void skip(int nSkippedFrame){};
 	virtual uint32_t getTimeStamp() = 0;
 	virtual int getTotalFrame(){return 0;}

@@ -8,6 +8,8 @@
 #include "SL_SurfMatching.h"
 #include "math/SL_LinAlg.h"
 #include "geometry/SL_FundamentalMatrix.h"
+#include "opencv2/xfeatures2d.hpp"
+#include "opencv2/features2d.hpp"
 #include <cmath>
 #include <cfloat>
 #if CV_MINOR_VERSION > 3
@@ -143,9 +145,18 @@ int detectSURFPoints(const ImgG& img, Mat_d& surfPts,
 		std::vector<float>& surfDesc, double hessianThreshold) {
 
 	KpVec surfPtsVec;
+
+	//  opencv 3.0
+	cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create(hessianThreshold, 4, 2, false);
+	cv::Mat cvImg(img.rows, img.cols, CV_8UC1, img.data);
+	detector->detectAndCompute(cvImg, cv::Mat(), surfPtsVec, surfDesc);
+	KpVec2Mat(surfPtsVec, surfPts);
+	return detector->descriptorSize();
+
+	/* opencv 2.4
 	cv::SURF surf(hessianThreshold, 4, 2, false);
 	cv::Mat cvImg(img.rows, img.cols, CV_8UC1, img.data);
 	surf(cvImg, cv::Mat(), surfPtsVec, surfDesc);
 	KpVec2Mat(surfPtsVec, surfPts);
-	return surf.descriptorSize();
+	return surf.descriptorSize();   */
 }

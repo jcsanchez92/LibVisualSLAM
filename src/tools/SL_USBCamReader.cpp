@@ -9,54 +9,45 @@
 #include "SL_error.h"
 
 void USBCamReader::open() {
-	if (videoCap)
-		cvReleaseCapture(&videoCap);
-	videoCap = cvCaptureFromCAM(camid);
-	cvSetCaptureProperty(videoCap, CV_CAP_PROP_FRAME_WIDTH, 640);
-	cvSetCaptureProperty(videoCap, CV_CAP_PROP_FRAME_HEIGHT, 480);
-	cvSetCaptureProperty(videoCap, CV_CAP_PROP_FPS, 30);
-	if (!videoCap) {
+	videoCap.open(camid);
+	videoCap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+	videoCap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+	videoCap.set(CV_CAP_PROP_FPS, 30);
+	if (!videoCap.isOpened()) {
 		repErr("ERROR: Fail to detect the USB camera \n");
 	}
-	_w = (int)cvGetCaptureProperty(videoCap, CV_CAP_PROP_FRAME_WIDTH);
-	_h = (int)cvGetCaptureProperty(videoCap, CV_CAP_PROP_FRAME_HEIGHT);
+	_w = (int)videoCap.get(CV_CAP_PROP_FRAME_WIDTH);
+	_h = (int)videoCap.get(CV_CAP_PROP_FRAME_HEIGHT);
 	if (_w <=0 || _h <= 0)
 		repErr("ERROR: Fail to open the USB camera \n");
 
 	_tm.tic();
 }
 USBCamReader::~USBCamReader(){
-	if(videoCap)
-		cvReleaseCapture(&videoCap);
+	if(videoCap.isOpened())
+		videoCap.release();
 }
 
 void USBCamReader::grabFrame() {
-	assert(videoCap);
-	cvGrabFrame(videoCap);
+	assert(videoCap.isOpened());
+	videoCap.grab();
 }
-void USBCamReader::readCurFrameRGB(unsigned char* imgdata) {
-	assert(videoCap);
-	IplImage* img = cvRetrieveFrame(videoCap);
-	memcpy(imgdata, img->imageData, _w * _h * 3);
+void USBCamReader::readCurFrameRGB(cv::Mat& img) {
+	assert(videoCap.isOpened());
+	videoCap.read(img);
 }
-void USBCamReader::readCurFrameGray(unsigned char* grayImgData) {
-	assert(videoCap);
-	IplImage* img = cvRetrieveFrame(videoCap);
-	cv::Mat rawFrame(img);
-	cv::Mat videoFrame(_h, _w, CV_8UC1, grayImgData);
-	cv::cvtColor(rawFrame, videoFrame, CV_RGB2GRAY);
+void USBCamReader::readCurFrameGray(cv::Mat& grayimg) {
+	assert(videoCap.isOpened());
+	cv::Mat rawFrame;
+	videoCap.retrieve(rawFrame);
+	cv::cvtColor(rawFrame, grayimg, CV_RGB2GRAY);
 }
-void USBCamReader::readCurFrame(unsigned char* rgbdata,
-		unsigned char* graydata) {
-	assert(videoCap);
-	IplImage* img = cvRetrieveFrame(videoCap);
-	cv::Mat rawFrame(img);
-
-	cv::Mat rgbImg(_h, _w, CV_8UC3, rgbdata);
+void USBCamReader::readCurFrame(cv::Mat& rgbImg,
+		cv::Mat& grayImg) {
+	assert(videoCap.isOpened());
+	cv::Mat rawFrame;
 	cv::cvtColor(rawFrame, rgbImg, CV_BGR2RGB);
-
-	cv::Mat videoFrame(_h, _w, CV_8UC1, graydata);
-	cv::cvtColor(rawFrame, videoFrame, CV_RGB2GRAY);
+	cv::cvtColor(rawFrame, grayImg, CV_RGB2GRAY);
 }
 uint32_t USBCamReader::getTimeStamp(){
 	double ts = _tm.get_pass_time();
